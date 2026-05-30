@@ -1,0 +1,1815 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>=LOVE 全曲言えるかなクイズ</title>
+
+<style>
+
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  font-family:system-ui,sans-serif;
+  background:#f4f6ff;
+  color:#222;
+}
+
+/* ======================
+   PCレイアウト
+====================== */
+
+.wrapper{
+  max-width:1400px;
+  margin:auto;
+  padding:24px;
+}
+
+h1{
+  margin-top:0;
+  font-size:34px;
+}
+
+.main-grid{
+  display:grid;
+  grid-template-columns: 1fr 650px;
+  gap:24px;
+  align-items:start;
+}
+
+/* ======================
+   左側
+====================== */
+
+.left-panel{
+  background:white;
+  border-radius:20px;
+  padding:24px;
+  box-shadow:0 4px 16px rgba(0,0,0,0.08);
+}
+
+.input-row{
+  display:flex;
+  gap:10px;
+  margin-bottom:18px;
+}
+
+#answer{
+  flex:1;
+  font-size:18px;
+  padding:14px;
+  border-radius:12px;
+  border:1px solid #ccc;
+}
+
+button{
+  border:none;
+
+  border-radius:14px;
+
+  padding:14px 18px;
+
+  font-size:15px;
+  font-weight:bold;
+
+  cursor:pointer;
+
+  background:#6f7cff;
+  color:white;
+
+  transition:0.2s;
+
+  white-space:nowrap;
+}
+
+button:hover{
+  opacity:.85;
+}
+
+.hint-buttons{
+  margin-top:20px;
+
+  display:grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap:12px;
+}
+
+#result{
+  margin-top:16px;
+  font-weight:bold;
+  min-height:60px;
+}
+
+.ok{
+  color:#0a7a2f;
+}
+
+.ng{
+  color:#c00;
+}
+
+.score-box{
+  margin-top:16px;
+  padding:12px;
+  background:#eef2ff;
+  border-radius:12px;
+  font-size:18px;
+  font-weight:bold;
+}
+
+#hint-area{
+  margin-top:18px;
+  background:#fff8df;
+  border-radius:12px;
+  padding:16px;
+  min-height:120px;
+  line-height:1.8;
+  font-weight:bold;
+}
+
+/* ======================
+   画像エリア
+====================== */
+
+.right-panel{
+  position:sticky;
+  top:20px;
+}
+
+.image-card{
+  background:white;
+  border-radius:20px;
+  padding:20px;
+  box-shadow:0 4px 16px rgba(0,0,0,0.08);
+}
+
+#image-area{
+  width:100%;
+  max-width:620px;
+  border-radius:20px;
+  box-shadow:0 8px 24px rgba(0,0,0,0.25);
+  text-align:center;
+}
+
+#image-area img{
+  width:100%;
+  max-width:620px;
+  max-height:80vh;
+
+  object-fit:contain;
+
+  border-radius:20px;
+
+  box-shadow:
+    0 10px 30px rgba(0,0,0,0.25);
+
+  transition:0.3s;
+}
+
+.audio-player{
+
+  margin-top:18px;
+
+  padding:16px;
+
+  background:#f0f3ff;
+
+  border-radius:16px;
+
+}
+
+#now-playing{
+
+  font-weight:bold;
+
+  margin-bottom:12px;
+
+  font-size:15px;
+
+}
+
+.audio-buttons{
+
+  display:grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap:12px;
+
+}
+
+.audio-buttons button{
+
+  width:100%;
+
+  padding:14px 10px;
+
+  font-size:15px;
+
+}
+
+/* ======================
+   正解一覧
+====================== */
+
+.correct-section{
+  margin-top:24px;
+  background:white;
+  border-radius:20px;
+  padding:20px;
+  box-shadow:0 4px 16px rgba(0,0,0,0.08);
+}
+
+#correct-list{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.correctItem{
+  padding:8px 12px;
+  background:#e6ffe6;
+  border-radius:999px;
+  font-size:14px;
+  font-weight:bold;
+}
+
+#remaining-count{
+  font-size:18px;
+  font-weight:bold;
+}
+
+/* ======================
+   スマホ対応
+====================== */
+
+@media(max-width:900px){
+
+  .main-grid{
+    grid-template-columns:1fr;
+  }
+
+  .right-panel{
+    position:static;
+  }
+
+  .input-row{
+    flex-direction:column;
+  }
+
+  button{
+    width:100%;
+  }
+
+  .audio-buttons{
+
+    grid-template-columns:1fr;
+
+  }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="wrapper">
+
+<h1>=LOVE 全曲言えるかなクイズ</h1>
+
+<div style="
+  font-size:13px;
+  color:#666;
+  margin-top:-8px;
+  margin-bottom:18px;
+">
+  ※「フラジャイル」は除く
+</div>
+
+<div class="main-grid">
+
+  <!-- 左 -->
+  <div class="left-panel">
+
+    <div class="input-row">
+      <button onclick="startGame()">
+        ▶ 開始
+      </button>
+
+      <button onclick="resetGame()">
+        🔄 リセット
+      </button>
+
+      <input
+        id="answer"
+        type="text"
+        placeholder="開始ボタンを押してください"
+        disabled
+      >
+      <button onclick="checkAnswer()">送信</button>
+
+    </div>
+
+    <div id="result"></div>
+
+    <div class="score-box">
+      正解数：
+      <span id="score">0</span> /
+      <span id="total"></span>
+    </div>
+
+    <div class="score-box">
+      タイム：
+      <span id="timer">0:00</span>
+    </div>
+
+    <div class="hint-buttons">
+      <button onclick="showHint(1)">
+        ヒント1：全体 / ユニット
+      </button>
+
+      <button onclick="showHint(2)">
+        ヒント2：収録CD
+      </button>
+
+      <button onclick="showHint(3)">
+        ヒント3：センター
+      </button>
+    </div>
+
+    <div id="hint-area"></div>
+
+  </div>
+
+  <!-- 右 -->
+  <div class="right-panel">
+
+    <div class="image-card">
+      <h2>サムネイル画像</h2>
+      <div id="image-area"></div>
+
+      <div class="audio-player">
+
+        <div id="now-playing">
+          再生中：なし
+          </div>
+    
+          <div class="audio-buttons">
+    
+            <button onclick="resumeSong()">
+              ▶ 再生
+            </button>
+    
+            <button onclick="pauseSong()">
+              ⏸ 一時停止
+            </button>
+    
+            <button onclick="stopSong()">
+              ⏹ 停止
+            </button>
+    
+          </div>
+    
+        </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<div class="correct-section">
+
+  <h2>正解した曲</h2>
+
+  <div id="correct-list"></div>
+
+  <br>
+
+  <h2>まだ出ていない曲</h2>
+
+  <div id="remaining-count"></div>
+
+</div>
+
+</div>
+
+<script>
+
+// ======================
+// 曲データ
+// ======================
+
+const allSongs=[
+
+{
+title:"＝LOVE",
+aliases:["いこーるらぶ","=love","イコールラブ"],
+hint1:"全体曲",
+hint2:"1st Single 『＝LOVE』",
+hint3:"髙松 瞳",
+type:"表題曲",
+image:"images/001_equal_love.png",
+audio:"audio/001_equal_love.m4a"
+},
+
+{
+title:"スタート！",
+aliases:["すたーと！","スタート!","すたーと!","すたーと","スタート"],
+hint1:"全体曲",
+hint2:"1st Single 『＝LOVE』",
+hint3:"髙松 瞳",
+type:"c/w",
+image:"images/002_start.png",
+audio:"audio/002_start.m4a"
+},
+
+{
+title:"記憶のどこかで",
+aliases:["きおくのどこかで"],
+hint1:"全体曲",
+hint2:"1st Single 『＝LOVE』",
+hint3:"野口 衣織・諸橋 沙夏",
+type:"c/w",
+image:"images/003_kiokuno_dokokade.png",
+audio:"audio/003_kiokuno_dokokade.m4a"
+},
+
+{
+title:"僕らの制服クリスマス",
+aliases:["ぼくらのせいふくくりすます"],
+hint1:"全体曲",
+hint2:"2nd Single 『僕らの制服クリスマス』",
+hint3:"髙松 瞳",
+type:"表題曲",
+image:"images/004_bokurano_seifuku_kurisumasu.png",
+audio:"audio/004_bokurano_seifuku_kurisumasu.m4a"
+},
+
+{
+title:"届いて LOVE YOU♡",
+aliases:["届いてLOVEYOU","とどいてらぶゆー","とどいてLOVEYOU"],
+hint1:"全体曲",
+hint2:"2nd Single 『僕らの制服クリスマス』",
+hint3:"齊藤 なぎさ",
+type:"c/w",
+image:"images/005_todoite_loveyou.png",
+audio:"audio/005_todoite_loveyou.m4a"
+},
+
+{
+title:"ようこそ!イコラブ沼",
+aliases:["ようこそ！イコラブ沼","ようこそいこらぶぬま","ようこそ!いこらぶぬま","ようこそ！いこらぶぬま"],
+hint1:"全体曲",
+hint2:"2nd Single 『僕らの制服クリスマス』",
+hint3:"髙松 瞳",
+type:"c/w",
+image:"images/006_youkoso_ikorabunuma.png",
+audio:"audio/006_youkoso_ikorabunuma.m4a"
+},
+
+{
+title:"手遅れcaution",
+aliases:["ておくれこーしょん","ておくれcaution","手遅れこーしょん"],
+hint1:"全体曲",
+hint2:"3rd Single 『手遅れcaution』",
+hint3:"髙松 瞳",
+type:"表題曲",
+image:"images/007_teokure_caution.png",
+audio:"audio/007_teokure_caution.m4a"
+},
+
+{
+title:"部活中に目が合うなって思ってたんだ",
+aliases:["ぶかつちゅうにめがあうなっておもってたんだ"],
+hint1:"全体曲",
+hint2:"3rd Single 『手遅れcaution』",
+hint3:"髙松 瞳",
+type:"c/w",
+image:"images/008_bukatutyuuni_megaaunatte_omottetanda.png",
+audio:"audio/008_bukatutyuuni_megaaunatte_omottetanda.m4a"
+},
+
+{
+title:"樹愛羅、助けに来たぞ",
+aliases:["きあらたすけにきたぞ","きあたす","きあら、たすけにきたぞ"],
+hint1:"全体曲",
+hint2:"3rd Single 『手遅れcaution』",
+hint3:"齋藤 樹愛羅",
+type:"c/w",
+image:"images/009_kiara_tasukenikitazo.png",
+audio:"audio/009_kiara_tasukenikitazo.m4a"
+},
+
+{
+title:"Want you！Want you！",
+aliases:["wantyou wantyou","うぉんちゅーうぉんちゅー","want you! want you!","Want you!Want you!"],
+hint1:"全体曲",
+hint2:"4th Single 『Want you！Want you！』",
+hint3:"髙松 瞳",
+type:"表題曲",
+image:"images/010_Want you！Want you！.png",
+audio:"audio/010_Want you！Want you！.m4a"
+},
+
+{
+title:"アイカツハッピーエンド",
+aliases:["あいかつはっぴーえんど"],
+hint1:"全体曲",
+hint2:"4th Single 『Want you！Want you！』",
+hint3:"髙松 瞳",
+type:"c/w",
+image:"images/011_aikatu_happy_end.png",
+audio:"audio/011_aikatu_happy_end.m4a"
+},
+
+{
+title:"今、この船に乗れ！",
+aliases:["いまこのふねにのれ","いまこのふねにのれ！","今、この船に乗れ","今この船に乗れ!","いまこのふねにのれ!"],
+hint1:"全体曲",
+hint2:"4th Single 『Want you！Want you！』",
+hint3:"髙松 瞳・山本 杏奈",
+type:"c/w",
+image:"images/012_imakonofuneninore.png",
+audio:"audio/012_imakonofuneninore.m4a"
+},
+
+{
+title:"探せ ダイヤモンドリリー",
+aliases:["さがせだいやもんどりりー","だいりり","ダイリリ"],
+hint1:"全体曲",
+hint2:"5th Single 『探せ ダイヤモンドリリー』",
+hint3:"髙松 瞳",
+type:"表題曲",
+image:"images/013_sagase_diamond_riri-.png",
+audio:"audio/013_sagase_diamond_riri-.m4a"
+},
+
+{
+title:"いらない ツインテール",
+aliases:["いらないついんてーる"],
+hint1:"全体曲",
+hint2:"5th Single 『探せ ダイヤモンドリリー』",
+hint3:"齋藤 樹愛羅・齊藤 なぎさ",
+type:"c/w",
+image:"images/014_iranai_twintale.png",
+audio:"audio/014_iranai_twintale.m4a"
+},
+
+{
+title:"虹の素",
+aliases:["にじのもと"],
+hint1:"ユニット曲(佐々木、野口)",
+hint2:"5th Single 『探せ ダイヤモンドリリー』",
+hint3:"なし",
+type:"c/w",
+image:"images/015_nijinomoto.png",
+audio:"audio/015_nijinomoto.m4a"
+},
+
+{
+title:"ズルいよ ズルいね",
+aliases:["ずるいよずるいね","ずるずる","ズルズル"],
+hint1:"全体曲",
+hint2:"6th Single 『ズルいよ ズルいね』",
+hint3:"齊藤 なぎさ",
+type:"表題曲",
+image:"images/016_zuruiyo_zuruine.png",
+audio:"audio/016_zuruiyo_zuruine.m4a"
+},
+
+{
+title:"Sweetest girl",
+aliases:["すうぃーてすとがーる"],
+hint1:"ユニット曲(大谷、齊藤、齋藤、諸橋、音嶋)",
+hint2:"6th Single 『ズルいよ ズルいね』",
+hint3:"大谷 映美里",
+type:"c/w",
+image:"images/017_sweetest_girl.png",
+audio:"audio/017_sweetest_girl.m4a"
+},
+
+{
+title:"推しのいる世界",
+aliases:["おしのいるせかい"],
+hint1:"ユニット曲(佐竹、山本、佐々木、野口、大場、瀧脇)",
+hint2:"6th Single 『ズルいよ ズルいね』",
+hint3:"佐竹 のん乃",
+type:"c/w",
+image:"images/018_oshinoirusekai.png",
+audio:"audio/018_oshinoirusekai.m4a"
+},
+
+{
+title:"CAMEO",
+aliases:["かめお","カメオ"],
+hint1:"全体曲",
+hint2:"7th Single 『CAMEO』",
+hint3:"大谷 映美里・齊藤 なぎさ",
+type:"表題曲",
+image:"images/019_cameo.png",
+audio:"audio/019_cameo.m4a"
+},
+
+{
+title:"君と私の歌",
+aliases:["きみとわたしのうた"],
+hint1:"全体曲",
+hint2:"7th Single 『CAMEO』",
+hint3:"野口 衣織",
+type:"c/w",
+image:"images/020_kimito_watashinouta.png",
+audio:"audio/020_kimito_watashinouta.m4a"
+},
+
+{
+title:"My Voice Is For You",
+aliases:["まいぼいすいずふぉーゆー"],
+hint1:"ソロ曲(諸橋 沙夏)",
+hint2:"7th Single 『CAMEO』",
+hint3:"諸橋 沙夏",
+type:"c/w",
+image:"images/021_myvoiceisforyou.png",
+audio:"audio/021_myvoiceisforyou.m4a"
+},
+
+{
+title:"青春\"サブリミナル\"",
+aliases:["せいしゅんさぶりみなる","あおさぶ"],
+hint1:"全体曲",
+hint2:"8th Single 『青春\"サブリミナル\"』",
+hint3:"髙松 瞳",
+type:"表題曲",
+image:"images/022_seisyunn_subliminal.png",
+audio:"audio/022_seisyunn_subliminal.m4a"
+},
+
+{
+title:"しゅきぴ",
+aliases:["シュキピ"],
+hint1:"全体曲",
+hint2:"8th Single 『青春\"サブリミナル\"』",
+hint3:"佐々木 舞香",
+type:"c/w",
+image:"images/023_syukipi.png",
+audio:"audio/023_syukipi.m4a"
+},
+
+{
+title:"流星群",
+aliases:["りゅうせいぐん"],
+hint1:"ユニット曲(髙松、齊藤)",
+hint2:"8th Single 『青春\"サブリミナル\"』",
+hint3:"なし",
+type:"c/w",
+image:"images/024_ryuuseigun.png",
+audio:"audio/024_ryuuseigun.m4a"
+},
+
+{
+title:"桜の咲く音がした",
+aliases:["さくらのさくおとがした"],
+hint1:"全体曲",
+hint2:"1st Album 『全部、内緒。』",
+hint3:"髙松 瞳",
+type:"リード曲",
+image:"images/025_sakurano_sakuotogashita.png",
+audio:"audio/025_sakurano_sakuotogashita.m4a"
+},
+
+{
+title:"Oh！Darling",
+aliases:["ohdarling","おーだーりん","オーダーリン"],
+hint1:"全体曲",
+hint2:"1st Album 『全部、内緒。』",
+hint3:"髙松 瞳",
+type:"収録曲",
+image:"images/026_ohdarling.png",
+audio:"audio/026_ohdarling.m4a"
+},
+
+{
+title:"セノビーインラブ",
+aliases:["せのびーいんらぶ"],
+hint1:"全体曲",
+hint2:"1st Album 『全部、内緒。』",
+hint3:"齋藤 樹愛羅",
+type:"収録曲",
+image:"images/027_senobi-in_love.png",
+audio:"audio/027_senobi-in_love.m4a"
+},
+
+{
+title:"cinema",
+aliases:["しねま","シネマ"],
+hint1:"全体曲",
+hint2:"1st Album 『全部、内緒。』",
+hint3:"音嶋 莉沙",
+type:"収録曲",
+image:"images/028_cinema.png",
+audio:"audio/028_cinema.m4a"
+},
+
+{
+title:"現役アイドルちゅ〜",
+aliases:["げんえきあいどるちゅー","げんえきあいどるちゅ~","げんえきあいどるちゅ～","現役アイドルちゅ~","現役アイドルちゅ～"],
+hint1:"ソロ曲(齊藤 なぎさ)",
+hint2:"1st Album 『全部、内緒。』",
+hint3:"齊藤 なぎさ",
+type:"収録曲",
+image:"images/029_genneki_idletyu-.png",
+audio:"audio/029_genneki_idletyu-.m4a"
+},
+
+{
+title:"拝啓 貴方様",
+aliases:["はいけいあなたさま"],
+hint1:"ソロ曲(野口 衣織)",
+hint2:"1st Album 『全部、内緒。』",
+hint3:"野口 衣織",
+type:"収録曲",
+image:"images/030_haikei_anatasama.png",
+audio:"audio/030_haikei_anatasama.m4a"
+},
+
+{
+title:"24/7",
+aliases:["とぅうぇんてぃーふぉーせぶん","トゥウェンティーフォーセブン"],
+hint1:"ユニット曲(諸橋、野口、髙松、齋藤、山本)",
+hint2:"1st Album 『全部、内緒。』",
+hint3:"諸橋 沙夏・野口 衣織",
+type:"収録曲",
+image:"images/031_twentyfour_seven.png",
+audio:"audio/031_twentyfour_seven.m4a"
+},
+
+{
+title:"お姉さんじゃダメですか？",
+aliases:["おねえさんじゃだめですか？","おねえさんじゃだめですか"],
+hint1:"ユニット曲(大谷、佐々木、音嶋、大場、齊藤、瀧脇)",
+hint2:"1st Album 『全部、内緒。』",
+hint3:"大谷 映美里・佐々木 舞香",
+type:"収録曲",
+image:"images/032_oneesanja_damedesuaka.png",
+audio:"audio/032_oneesanja_damedesuaka.m4a"
+},
+
+{
+title:"866",
+aliases:["はちろくろく","ハチロクロク","８６６"],
+hint1:"全体曲",
+hint2:"1st Album 『全部、内緒。』",
+hint3:"なし",
+type:"収録曲",
+image:"images/033_hachirokuroku.png",
+audio:"audio/033_hachirokuroku.m4a"
+},
+
+{
+title:"ウィークエンドシトロン",
+aliases:["うぃーくえんどしとろん","うぃーけん"],
+hint1:"全体曲",
+hint2:"9th Single 『ウィークエンドシトロン』",
+hint3:"髙松 瞳",
+type:"表題曲",
+image:"images/034_weekend_citron.png",
+audio:"audio/034_weekend_citron.m4a"
+},
+
+{
+title:"祝祭",
+aliases:["しゅくさい"],
+hint1:"全体曲",
+hint2:"9th Single 『ウィークエンドシトロン』",
+hint3:"野口 衣織・大場 花菜",
+type:"c/w",
+image:"images/035_syukusai.png",
+audio:"audio/035_syukusai.m4a"
+},
+
+{
+title:"ズッ友案件",
+aliases:["ずっともあんけん"],
+hint1:"全体曲",
+hint2:"9th Single 『ウィークエンドシトロン』",
+hint3:"髙松 瞳・齊藤 なぎさ",
+type:"c/w",
+image:"images/036_zuttomo_ankenn.png",
+audio:"audio/036_zuttomo_ankenn.m4a"
+},
+
+{
+title:"夏祭り恋慕う",
+aliases:["なつまつりこいしたう"],
+hint1:"全体曲",
+hint2:"9th Single 『ウィークエンドシトロン』",
+hint3:"佐々木 舞香",
+type:"c/w",
+image:"images/037_natsumatsuri_koishitau.png",
+audio:"audio/037_natsumatsuri_koishitau.m4a"
+},
+
+{
+title:"The 5th",
+aliases:["ざふぃふす","ざごす","The ５th","ザフィフス","ザゴス"],
+hint1:"全体曲",
+hint2:"10th Single 『The 5th』",
+hint3:"髙松 瞳",
+type:"表題曲",
+image:"images/038_thefifth.png",
+audio:"audio/038_thefifth.m4a"
+},
+
+{
+title:"お姫様にしてよ！",
+aliases:["おひめさまにしてよ！","おひめさまにしてよ"],
+hint1:"全体曲",
+hint2:"10th Single 『The 5th』",
+hint3:"音嶋 莉沙",
+type:"c/w",
+image:"images/039_ohimesamani_shiteyo.png",
+audio:"audio/039_ohimesamani_shiteyo.m4a"
+},
+
+{
+title:"Poison Girl",
+aliases:["ぽいずんがーる"],
+hint1:"全体曲",
+hint2:"10th Single 『The 5th』",
+hint3:"大谷 映美里",
+type:"c/w",
+image:"images/040_poinson_girl.png",
+audio:"audio/040_poinson_girl.m4a"
+},
+
+{
+title:"BPM170の君へ",
+aliases:["びーぴーえむひゃくななじゅうのきみへ","BPM１７０の君へ"],
+hint1:"ユニット曲(瀧脇、大場、髙松、野口、山本)",
+hint2:"10th Single 『The 5th』",
+hint3:"瀧脇 笙古",
+type:"c/w",
+image:"images/041_bpm_hyakunanajuu_nokimihe.png",
+audio:"audio/041_bpm_hyakunanajuu_nokimihe.m4a"
+},
+
+{
+title:"あの子コンプレックス",
+aliases:["あのここんぷれっくす","あのコン","あのこん"],
+hint1:"全体曲",
+hint2:"11th Single 『あの子コンプレックス』",
+hint3:"佐々木 舞香",
+type:"表題曲",
+image:"images/042_anoko_complex.png",
+audio:"audio/042_anoko_complex.m4a"
+},
+
+{
+title:"笑顔のレシピ",
+aliases:["えがおのれしぴ"],
+hint1:"全体曲",
+hint2:"11th Single 『あの子コンプレックス』",
+hint3:"山本 杏奈",
+type:"c/w",
+image:"images/043_egaono_recipe.png",
+audio:"audio/043_egaono_recipe.m4a"
+},
+
+{
+title:"知らんけど",
+aliases:["しらんけど"],
+hint1:"ユニット曲(野口、佐々木、諸橋)",
+hint2:"11th Single 『あの子コンプレックス』",
+hint3:"野口 衣織",
+type:"c/w",
+image:"images/044_shirankedo.png",
+audio:"audio/044_shirankedo.m4a"
+},
+
+{
+title:"僕のヒロイン",
+aliases:["ぼくのひろいん"],
+hint1:"ソロ曲(髙松 瞳)",
+hint2:"11th Single 『あの子コンプレックス』",
+hint3:"髙松 瞳",
+type:"収録曲",
+image:"images/045_bokuno_heroine.png",
+audio:"audio/045_bokuno_heroine.m4a"
+},
+
+{
+title:"Be Selfish",
+aliases:["びーせるふぃっしゅ","びーせる"],
+hint1:"全体曲",
+hint2:"12th Single 『Be Selfish』",
+hint3:"野口 衣織",
+type:"表題曲",
+image:"images/046_be_selfish.png",
+audio:"audio/046_be_selfish.m4a"
+},
+
+{
+title:"好きって、言えなかった",
+aliases:["すきっていえなかった","すきって、いえなかった","好きって言えなかった"],
+hint1:"全体曲",
+hint2:"12th Single 『Be Selfish』",
+hint3:"野口 衣織",
+type:"c/w",
+image:"images/047_sukitte_ienakatta.png",
+audio:"audio/047_sukitte_ienakatta.m4a"
+},
+
+{
+title:"わたし、魔法使い",
+aliases:["わたし、まほうつかい","わたしまほうつかい"],
+hint1:"ユニット曲(齊藤、大谷)",
+hint2:"12th Single 『Be Selfish』",
+hint3:"なし",
+type:"c/w",
+image:"images/048_watashi_mahoutukai.png",
+audio:"audio/048_watashi_mahoutukai.m4a"
+},
+
+{
+title:"真夜中マーメイド",
+aliases:["まよなかまーめいど"],
+hint1:"ソロ曲(佐々木 舞香)",
+hint2:"12th Single 『Be Selfish』",
+hint3:"佐々木 舞香",
+type:"c/w",
+image:"images/049_mayonaka_mermaid.png",
+audio:"audio/049_mayonaka_mermaid.m4a"
+},
+
+{
+title:"この空がトリガー",
+aliases:["このそらがとりがー"],
+hint1:"全体曲",
+hint2:"13th Single 『この空がトリガー』",
+hint3:"佐々木 舞香",
+type:"表題曲",
+image:"images/050_konosoraga_trigger.png",
+audio:"audio/050_konosoraga_trigger.m4a"
+},
+
+{
+title:"Junkies",
+aliases:["じゃんきーず"],
+hint1:"全体曲",
+hint2:"13th Single 『この空がトリガー』",
+hint3:"髙松 瞳",
+type:"c/w",
+image:"images/051_junkies.png",
+audio:"audio/051_junkies.m4a"
+},
+
+{
+title:"ラブクリエイト",
+aliases:["らぶくりえいと"],
+hint1:"全体曲",
+hint2:"13th Single 『この空がトリガー』",
+hint3:"野口 衣織",
+type:"c/w",
+image:"images/052_love_create.png",
+audio:"audio/052_love_create.m4a"
+},
+
+{
+title:"Kiara Tiara",
+aliases:["きあらてぃあら","キアラティアラ"],
+hint1:"ソロ曲(齋藤 樹愛羅)",
+hint2:"13th Single 『この空がトリガー』",
+hint3:"齋藤 樹愛羅",
+type:"c/w",
+image:"images/053_kiara_tiara.png",
+audio:"audio/053_kiara_tiara.m4a"
+},
+
+{
+title:"君だけの花道",
+aliases:["きみだけのはなみち"],
+hint1:"ソロ曲(齊藤 なぎさ)",
+hint2:"Digital Single",
+hint3:"齊藤 なぎさ",
+type:"「君だけの花道」",
+image:"images/054_kimidakeno_hanamiti.png",
+audio:"audio/054_kimidakeno_hanamiti.m4a"
+},
+
+{
+title:"おかえり、花便り",
+aliases:["おかえりはなだより","おかえり、はなだより"],
+hint1:"ソロ曲(山本 杏奈)",
+hint2:"Digital Single",
+hint3:"山本 杏奈",
+type:"「おかえり、花便り」",
+image:"images/055_okaeri_hanadayori.png",
+audio:"audio/055_okaeri_hanadayori.m4a"
+},
+
+{
+title:"ナツマトペ",
+aliases:["なつまとぺ"],
+hint1:"全体曲",
+hint2:"14th Single 『ナツマトぺ』",
+hint3:"佐々木 舞香・野口 衣織",
+type:"表題曲",
+image:"images/056_natsumatope.png",
+audio:"audio/056_natsumatope.m4a"
+},
+
+{
+title:"ヒロインズ",
+aliases:["ひろいんず"],
+hint1:"全体曲",
+hint2:"14th Single 『ナツマトぺ』",
+hint3:"山本 杏奈",
+type:"c/w",
+image:"images/057_heroines.png",
+audio:"audio/057_heroines.m4a"
+},
+
+{
+title:"だからとて",
+aliases:["ダカラトテ"],
+hint1:"全体曲",
+hint2:"14th Single 『ナツマトぺ』",
+hint3:"野口 衣織",
+type:"c/w",
+image:"images/058_dakaratote.png",
+audio:"audio/058_dakaratote.m4a"
+},
+
+{
+title:"ラブロケ",
+aliases:["らぶろけ"],
+hint1:"ユニット曲(大場、齋藤、音嶋、山本、瀧脇、髙松)",
+hint2:"14th Single 『ナツマトぺ』",
+hint3:"大場 花菜",
+type:"c/w",
+image:"images/059_love_loce.png",
+audio:"audio/059_love_loce.m4a"
+},
+
+{
+title:"ラストノートしか知らない",
+aliases:["らすとのーとしかしらない"],
+hint1:"全体曲",
+hint2:"15th Single 『ラストノートしか知らない』",
+hint3:"齋藤 樹愛羅",
+type:"表題曲",
+image:"images/060_lastnote_shika_shiranai.png",
+audio:"audio/060_lastnote_shika_shiranai.m4a"
+},
+
+{
+title:"ドライブ デート 都内",
+aliases:["どらいぶでーととない"],
+hint1:"全体曲",
+hint2:"15th Single 『ラストノートしか知らない』",
+hint3:"髙松 瞳",
+type:"c/w",
+image:"images/061_drive_date_tonai.png",
+audio:"audio/061_drive_date_tonai.m4a"
+},
+
+{
+title:"狂想カタストロフィ",
+aliases:["きょうそうかたすとろふぃ"],
+hint1:"全体曲",
+hint2:"15th Single 『ラストノートしか知らない』",
+hint3:"野口 衣織",
+type:"c/w",
+image:"images/062_kyousou_catastrophe.png",
+audio:"audio/062_kyousou_catastrophe.m4a"
+},
+
+{
+title:"どこが好きか言って",
+aliases:["どこがすきかいって"],
+hint1:"ユニット曲(大谷、佐々木、野口、諸橋)",
+hint2:"15th Single 『ラストノートしか知らない』",
+hint3:"なし",
+type:"c/w",
+image:"images/063_dokogasukika_itte.png",
+audio:"audio/063_dokogasukika_itte.m4a"
+},
+
+{
+title:"宝物はグリーン",
+aliases:["たからものはぐりーん"],
+hint1:"ソロ曲(諸橋 沙夏)",
+hint2:"Digital Single",
+hint3:"諸橋 沙夏",
+type:"「宝物はグリーン」",
+image:"images/064_takaramonoha_green.png",
+audio:"audio/064_takaramonoha_green.m4a"
+},
+
+{
+title:"呪って呪って",
+aliases:["のろってのろって","のろのろ"],
+hint1:"全体曲",
+hint2:"16th Single 『呪って呪って』",
+hint3:"野口 衣織",
+type:"表題曲",
+image:"images/065_norotte_norotte.png",
+audio:"audio/065_norotte_norotte.m4a"
+},
+
+{
+title:"君の第3ボタン",
+aliases:["きみのだいさんぼたん","君の第３ボタン"],
+hint1:"全体曲",
+hint2:"16th Single 『呪って呪って』",
+hint3:"齋藤 樹愛羅",
+type:"c/w",
+image:"images/066_kimino_daisannbotan.png",
+audio:"audio/066_kimino_daisannbotan.m4a"
+},
+
+{
+title:"誰にもバレずに",
+aliases:["だれにもばれずに"],
+hint1:"全体曲",
+hint2:"16th Single 『呪って呪って』",
+hint3:"佐々木 舞香",
+type:"c/w",
+image:"images/067_darenimobarezuni.png",
+audio:"audio/067_darenimobarezuni.m4a"
+},
+
+{
+title:"絶対アイドル辞めないで",
+aliases:["ぜったいあいどるやめないで","ぜつあい"],
+hint1:"全体曲",
+hint2:"17th Single 『絶対アイドル辞めないで』",
+hint3:"佐々木 舞香",
+type:"表題曲",
+image:"images/068_zettai_idle_yamenaide.png",
+audio:"audio/068_zettai_idle_yamenaide.m4a"
+},
+
+{
+title:"仲直りシュークリーム",
+aliases:["なかなおりしゅーくりーむ"],
+hint1:"全体曲",
+hint2:"17th Single 『絶対アイドル辞めないで』",
+hint3:"髙松 瞳・野口 衣織",
+type:"c/w",
+image:"images/069_nakanaori_syu-cream.png",
+audio:"audio/069_nakanaori_syu-cream.m4a"
+},
+
+{
+title:"海とレモンティー",
+aliases:["うみとれもんてぃー","うみれも","うみレモ"],
+hint1:"全体曲",
+hint2:"17th Single 『絶対アイドル辞めないで』",
+hint3:"大場 花菜",
+type:"c/w",
+image:"images/070_umito_lemontea.png",
+audio:"audio/070_umito_lemontea.m4a"
+},
+
+{
+title:"とくべチュ、して",
+aliases:["とくべちゅして","とくべちゅ、して","とくべちゅ"],
+hint1:"全体曲",
+hint2:"18th Single 『とくべチュ、して/恋人以上、好き未満』",
+hint3:"佐々木 舞香",
+type:"表題曲",
+image:"images/071_tokubetyu_shite.png",
+audio:"audio/071_tokubetyu_shite.m4a"
+},
+
+{
+title:"恋人以上、好き未満",
+aliases:["こいびといじょうすきみまん","こいびといじょう、すきみまん"],
+hint1:"全体曲",
+hint2:"18th Single 『とくべチュ、して/恋人以上、好き未満』",
+hint3:"佐々木 舞香",
+type:"表題曲",
+image:"images/072_koibitoijou_sukimiman.png",
+audio:"audio/072_koibitoijou_sukimiman.m4a"
+},
+
+{
+title:"超特急逃走中",
+aliases:["ちょうとっきゅうとうそうちゅう"],
+hint1:"全体曲",
+hint2:"18th Single 『とくべチュ、して/恋人以上、好き未満』",
+hint3:"野口 衣織",
+type:"c/w",
+image:"images/073_tyoutokkyuu_tousoutyuu.png",
+audio:"audio/073_tyoutokkyuu_tousoutyuu.m4a"
+},
+
+{
+title:"内緒バナシ",
+aliases:["ないしょばなし"],
+hint1:"全体曲",
+hint2:"Digital Single",
+hint3:"大谷 映美里",
+type:"「内緒バナシ」",
+image:"images/074_naisyobanashi.png",
+audio:"audio/074_naisyobanashi.m4a"
+},
+
+{
+title:"ラブソングに襲われる",
+aliases:["らぶそんぐにおそわれる"],
+hint1:"全体曲",
+hint2:"19th Single 『ラブソングに襲われる』",
+hint3:"佐々木 舞香",
+type:"表題曲",
+image:"images/075_lovesong_ni_osowareru.png",
+audio:"audio/075_lovesong_ni_osowareru.m4a"
+},
+
+{
+title:"木漏れ日メゾフォルテ",
+aliases:["こもれびめぞふぉるて"],
+hint1:"全体曲",
+hint2:"19th Single 『ラブソングに襲われる』",
+hint3:"瀧脇 笙古・音嶋 莉沙",
+type:"c/w",
+image:"images/076_komorebi_mezzoforte.png",
+audio:"audio/076_komorebi_mezzoforte.m4a"
+},
+
+{
+title:"Queens",
+aliases:["くいーんず","クイーンズ"],
+hint1:"ユニット曲(齋藤、野口)",
+hint2:"19th Single 『ラブソングに襲われる』",
+hint3:"なし",
+type:"c/w",
+image:"images/077_queens.png",
+audio:"audio/077_queens.m4a"
+},
+
+{
+title:"劇薬中毒",
+aliases:["げきやくちゅうどく"],
+hint1:"全体曲",
+hint2:"20th Single 『劇薬中毒』",
+hint3:"佐々木 舞香・野口 衣織",
+type:"表題曲",
+image:"images/078_gekiyaku_tyuudoku.png",
+audio:"audio/078_gekiyaku_tyuudoku.m4a"
+},
+
+{
+title:"モラトリアム",
+aliases:["もらとりあむ"],
+hint1:"全体曲",
+hint2:"20th Single 『劇薬中毒』",
+hint3:"諸橋 沙夏",
+type:"c/w",
+image:"images/079_moratorium.png",
+audio:"audio/079_moratorium.m4a"
+},
+
+{
+title:"お姫様の作り方",
+aliases:["おひめさまのつくりかた"],
+hint1:"全体曲",
+hint2:"20th Single 『劇薬中毒』",
+hint3:"齋藤 樹愛羅",
+type:"c/w",
+image:"images/080_ohimesamano_tukurikata.png",
+audio:"audio/080_ohimesamano_tukurikata.m4a"
+}
+
+];
+
+// ======================
+// 状態管理
+// ======================
+
+let startTime = null;
+
+let timerInterval = null;
+
+const correctSet = new Set();
+
+document.getElementById("total").textContent =
+  allSongs.length;
+
+// ======================
+// 正規化
+// ======================
+
+function normalize(text){
+
+  return text
+    .toLowerCase()
+    .replace(/\s/g,"")
+    .replace(/[！!]/g,"!")
+    .replace(/[？?]/g,"?")
+    .replace(/[、,]/g,"")
+    .replace(/[・]/g,"");
+
+}
+
+// ======================
+// ゲーム開始
+// ======================
+
+let gameStarted = false;
+
+function startGame(){
+
+  if(gameStarted) return;
+
+  gameStarted = true;
+
+  startTime = Date.now();
+
+  timerInterval =
+    setInterval(updateTimer,1000);
+
+  const answer =
+    document.getElementById("answer");
+
+  answer.disabled = false;
+
+  answer.placeholder =
+    "曲名を入力";
+
+  answer.focus();
+
+}
+
+function resetGame(){
+
+// タイマー停止
+clearInterval(timerInterval);
+
+// タイマー初期化
+startTime = null;
+
+timerInterval = null;
+
+// ゲーム未開始へ
+gameStarted = false;
+
+// 正解データ削除
+correctSet.clear();
+
+// スコア更新
+updateScore();
+
+updateRemaining();
+
+// 正解一覧削除
+document.getElementById("correct-list")
+  .innerHTML = "";
+
+// 結果表示削除
+document.getElementById("result")
+  .innerHTML = "";
+
+// ヒント削除
+document.getElementById("hint-area")
+  .innerHTML = "";
+
+// タイマー表示初期化
+document.getElementById("timer")
+  .textContent = "0:00";
+
+// 入力欄初期化
+const answer =
+  document.getElementById("answer");
+
+answer.value = "";
+
+answer.disabled = true;
+
+answer.placeholder =
+  "開始ボタンを押してください";
+
+// 画像削除
+document.getElementById("image-area")
+  .innerHTML = "";
+
+// ヒント曲リセット
+currentHintSong = null;
+
+openedHints = [];
+
+// 音楽停止
+stopSong();
+
+}
+
+
+// ======================
+// 回答チェック
+// ======================
+
+function checkAnswer(){
+
+  const input =
+    document.getElementById("answer");
+
+  const value = normalize(input.value);
+
+  if(!value) return;
+
+  let found = null;
+
+  let duplicated = false;
+
+  for(const song of allSongs){
+
+    const candidates =
+      [song.title,...song.aliases];
+
+    for(const name of candidates){
+
+      if(normalize(name) === value){
+
+        if(correctSet.has(song.title)){
+
+          duplicated = true;
+          
+        }else{
+
+          found = song;
+
+        }
+
+        break;
+
+      }
+
+    }
+
+    if(found || duplicated) break;
+  }
+
+  const result =
+    document.getElementById("result");
+
+  if(found){
+
+    correctSet.add(found.title);
+
+    result.innerHTML = `
+      正解！<br>
+
+      <div style="
+        font-size:14px;
+        color:inherit;
+        margin-bottom:6px;
+        font-weight:bold;
+        ">
+        ${found.hint2}  ${found.type}
+      </div>
+
+      <span style="
+        font-size:30px;
+        font-weight:bold;
+      ">
+        「${found.title}」
+      </span>
+      `;
+
+    result.className = "ok";
+
+    addCorrect(found.title);
+
+    updateScore();
+
+    updateRemaining();
+
+    showImage(found.image);
+
+    playSong(found.audio,found.title);
+
+    currentHintSong = null;
+    openedHints = [];
+
+    document.getElementById("hint-area")
+      .innerHTML = "";
+
+    if(correctSet.size === allSongs.length){
+
+      const endTime = Date.now();
+
+      const seconds = Math.floor((endTime - startTime) / 1000);
+      
+      const minutes = Math.floor(seconds / 60);
+
+      const remainSeconds = seconds % 60;
+
+      clearInterval(timerInterval);
+
+      alert(
+        "全問正解！！\n\n" +
+        "クリアタイム：" +
+        minutes + "分 " +
+        remainSeconds + "秒"
+      );
+
+      document.getElementById("answer")
+        .disabled = true;
+
+      gameStarted = false;
+
+    }
+
+  }else if(duplicated){
+
+    result.textContent = "その曲は既に正解しています";
+
+    result.className = "ng";
+
+  }else{
+
+    result.textContent = "不正解！";
+
+    result.className = "ng";
+
+  }
+
+  input.value = "";
+
+  input.focus();
+
+}
+
+// ======================
+// 正解表示
+// ======================
+
+function addCorrect(title){
+
+  const div = document.createElement("div");
+
+  div.className = "correctItem";
+
+  div.textContent = title;
+
+  document.getElementById("correct-list")
+    .appendChild(div);
+
+}
+
+// ======================
+// スコア更新
+// ======================
+
+function updateScore(){
+
+  document.getElementById("score")
+    .textContent = correctSet.size;
+
+}
+
+// ======================
+// 残り曲数
+// ======================
+
+function updateRemaining(){
+
+  document.getElementById("remaining-count")
+    .textContent =
+      "残り " +
+      (allSongs.length - correctSet.size) +
+      " 曲";
+
+}
+
+function updateTimer(){
+
+  if(startTime === null) return;
+
+  const now = Date.now();
+
+  const seconds =
+    Math.floor((now - startTime) / 1000);
+
+  const minutes =
+    Math.floor(seconds / 60);
+
+  const remainSeconds =
+    seconds % 60;
+
+  document.getElementById("timer")
+    .textContent =
+      minutes + ":" +
+      String(remainSeconds).padStart(2,"0");
+
+}
+
+// ======================
+// ヒント
+// ======================
+
+let currentHintSong = null;
+
+let openedHints = [];
+
+function showHint(level){
+
+  const remaining =
+    allSongs.filter(
+      s=>!correctSet.has(s.title)
+    );
+
+  if(remaining.length === 0){
+
+    document.getElementById("hint-area")
+      .textContent = "全問正解！";
+
+    return;
+  }
+
+  if(!currentHintSong){
+
+    currentHintSong =
+      remaining[
+        Math.floor(
+          Math.random()*remaining.length
+        )
+      ];
+
+    openedHints = [];
+
+  }
+
+  if(!openedHints.includes(level)){
+
+    openedHints.push(level);
+
+  }
+
+  let html = "";
+
+  if(openedHints.includes(1)){
+
+    html += "【ヒント1】<br>";
+    html += currentHintSong.hint1 + "<br><br>";
+
+  }
+
+  if(openedHints.includes(2)){
+
+    html += "【ヒント2】<br>";
+    html += currentHintSong.hint2 + "<br><br>";
+
+  }
+
+  if(openedHints.includes(3)){
+
+    html += "【ヒント3】<br>";
+    html += currentHintSong.hint3;
+
+  }
+
+  document.getElementById("hint-area")
+    .innerHTML = html;
+
+}
+
+// ======================
+// Enter送信
+// ======================
+
+document.getElementById("answer")
+.addEventListener("keydown",e=>{
+
+  if(e.key==="Enter"){
+
+    checkAnswer();
+
+  }
+
+});
+
+// ======================
+// 初期表示
+// ======================
+
+updateRemaining();
+
+// ======================
+// 音楽再生
+// ======================
+
+let currentAudio = null;
+
+let currentSongTitle = "";
+
+let stopTimer = null;
+
+function playSong(src,title){
+
+  // 前の曲停止
+  if(currentAudio){
+
+    currentAudio.pause();
+
+    currentAudio.currentTime = 0;
+
+  }
+
+  // タイマー解除
+  if(stopTimer){
+
+    clearTimeout(stopTimer);
+
+  }
+
+  currentAudio = new Audio(src);
+
+  currentSongTitle = title;
+
+  document.getElementById("now-playing")
+    .textContent =
+      "再生中：" + title;
+
+  currentAudio.play();
+
+  // 50秒停止
+  stopTimer = setTimeout(()=>{
+
+    stopSong();
+
+  },50000);
+
+}
+// ======================
+// 画像表示
+// ======================
+
+function showImage(src){
+
+  const area =
+    document.getElementById("image-area");
+
+  area.innerHTML = `
+    <img src="${src}" alt="ジャケット画像">
+  `;
+
+}
+
+function pauseSong(){
+
+  if(currentAudio){
+
+    currentAudio.pause();
+
+  }
+
+}
+
+function resumeSong(){
+
+  if(currentAudio){
+
+    currentAudio.play();
+
+    document.getElementById("now-playing")
+      .textContent =
+      "再生中：" + currentSongTitle;
+
+  }
+
+}
+
+function stopSong(){
+
+  if(currentAudio){
+
+    currentAudio.pause();
+
+    currentAudio.currentTime = 0;
+
+  }
+
+  if(stopTimer){
+  clearTimeout(stopTimer);
+  }
+
+  document.getElementById("now-playing")
+    .textContent =
+      "再生中：なし";
+
+}
+
+</script>
+
+</body>
+</html>
